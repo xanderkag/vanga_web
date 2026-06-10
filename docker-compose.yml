@@ -1,0 +1,15 @@
+services:
+  portal:
+    build:
+      context: .
+      args:
+        VITE_DEMO_MODE: "static"
+    image: docparser-portal:latest
+    container_name: docparser-portal
+    restart: unless-stopped
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true

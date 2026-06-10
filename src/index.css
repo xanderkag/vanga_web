@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+/* Тёмная тема по классу на <html> */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Дизайн-токены: developer-first, один акцентный цвет */
+@theme {
+  --color-accent: #4f46e5;
+  --color-accent-fg: #ffffff;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+:root {
+  --bg: #ffffff;
+  --fg: #0a0a0a;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --surface: #f9fafb;
+}
+
+.dark {
+  --bg: #0a0a0c;
+  --fg: #e8eaed;
+  --muted: #8b95a5;
+  --border: #1f2430;
+  --surface: #12151c;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Тонкая фокус-обводка для a11y */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}

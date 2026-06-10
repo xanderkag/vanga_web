@@ -1,0 +1,93 @@
+# ─────────────────────────────────────────────────────────────────────
+# Deploy Doc Parser portal на Asha (135.106.158.143).
+#
+# Механика обходит блокировку «ноут → РФ-IP»: код забирается на раннер
+# GitHub (actions/checkout), оттуда rsync по SSH заливает исходники на
+# Asha, и там же собирается Docker. Сервер в GitHub не ходит — репо может
+# быть приватным, лишних доступов не нужно.
+#
+# Prereq: secret SSH_PRIVATE_KEY_ASHA (тот же Asha-ключ, что у SLAI).
+# Public-часть уже в /root/.ssh/authorized_keys на сервере.
+# ─────────────────────────────────────────────────────────────────────
+name: deploy-portal
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-portal
+  cancel-in-progress: false
+
+env:
+  HOST: 135.106.158.143
+  REMOTE_DIR: /opt/projects/docparser-portal
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        env:
+          KEY: ${{ secrets.SSH_PRIVATE_KEY_ASHA }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/asha
+          chmod 600 ~/.ssh/asha
+          ssh-keyscan -p 22 -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Rsync source → server
+        run: |
+          rsync -az --delete \
+            --exclude '.git' --exclude 'node_modules' --exclude 'dist' --exclude '.github' \
+            -e "ssh -i ~/.ssh/asha -o StrictHostKeyChecking=accept-new -p 22" \
+            ./ root@"$HOST":"$REMOTE_DIR"/
+
+      - name: Build & up on server
+        run: |
+          ssh -i ~/.ssh/asha -o StrictHostKeyChecking=accept-new -p 22 root@"$HOST" \
+            "REMOTE_DIR='$REMOTE_DIR' bash -se" <<'REMOTE'
+          set -e
+          cd "$REMOTE_DIR"
+          echo "=== compose build & up ==="
+          docker compose -p docparser up -d --build
+          echo "=== wait for running ==="
+          for i in $(seq 1 30); do
+            ST=$(docker inspect docparser-portal --format '{{.State.Status}}' 2>/dev/null || echo "missing")
+            echo "  $i/30: $ST"
+            [ "$ST" = "running" ] && break
+            sleep 2
+          done
+          ST=$(docker inspect docparser-portal --format '{{.State.Status}}' 2>/dev/null || echo "missing")
+          if [ "$ST" != "running" ]; then
+            echo "✗ container не running ($ST)"; docker logs docparser-portal --tail 40 2>&1 || true; exit 1
+          fi
+          echo "=== internal smoke (proxy net) ==="
+          docker run --rm --network proxy curlimages/curl:8.10.1 \
+            -sf -o /dev/null -w "docparser-portal:80 → HTTP %{http_code}\n" \
+            http://docparser-portal:80/ || echo "⚠ internal curl failed (не критично для сборки)"
+          echo "✓ container OK"
+          REMOTE
+
+      - name: nginx layout diagnostics (read-only)
+        run: |
+          ssh -i ~/.ssh/asha -o StrictHostKeyChecking=accept-new -p 22 root@"$HOST" 'bash -se' <<'REMOTE'
+          set +e
+          echo "=== /opt/shared ==="
+          ls -la /opt/shared/ 2>/dev/null
+          echo "=== nginx container ==="
+          NGINX=$(docker ps --format '{{.Names}}' | grep -iE 'nginx|proxy' | head -1)
+          echo "container: ${NGINX:-<none>}"
+          [ -z "$NGINX" ] && { echo "nginx не найден"; exit 0; }
+          echo "=== mounts (host→container) ==="
+          docker inspect "$NGINX" --format '{{range .Mounts}}{{.Source}} -> {{.Destination}}{{println}}{{end}}'
+          echo "=== /etc/nginx/conf.d listing ==="
+          docker exec "$NGINX" sh -c 'ls -la /etc/nginx/conf.d/ 2>/dev/null'
+          echo "=== existing server_name entries ==="
+          docker exec "$NGINX" sh -c 'grep -rhn "server_name" /etc/nginx/conf.d/ 2>/dev/null | sed "s/^/  /"'
+          echo "=== is docparser already wired? ==="
+          docker exec "$NGINX" sh -c 'grep -rl "docparser" /etc/nginx/conf.d/ 2>/dev/null || echo "  (not yet)"'
+          REMOTE
