@@ -46,3 +46,114 @@ body {
   outline-offset: 2px;
   border-radius: 4px;
 }
+
+/* ─────────────── Документация: типографика MDX ─────────────── */
+.doc-prose {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--fg);
+}
+.doc-prose > * + * {
+  margin-top: 1rem;
+}
+.doc-prose h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-top: 0;
+}
+.doc-prose h2 {
+  font-size: 1.4rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  margin-top: 2.5rem;
+  padding-top: 0.5rem;
+  scroll-margin-top: 6rem;
+}
+.doc-prose h3 {
+  font-size: 1.12rem;
+  font-weight: 600;
+  margin-top: 1.75rem;
+  scroll-margin-top: 6rem;
+}
+.doc-prose p,
+.doc-prose li {
+  color: var(--fg);
+}
+.doc-prose a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+.doc-prose a:hover {
+  text-decoration: underline;
+}
+.doc-prose ul,
+.doc-prose ol {
+  padding-left: 1.4rem;
+}
+.doc-prose ul {
+  list-style: disc;
+}
+.doc-prose ol {
+  list-style: decimal;
+}
+.doc-prose li::marker {
+  color: var(--muted);
+}
+.doc-prose blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+}
+.doc-prose hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 2rem 0;
+}
+.doc-prose table {
+  width: 100%;
+  font-size: 14px;
+  border-collapse: collapse;
+  display: block;
+  overflow-x: auto;
+}
+.doc-prose th,
+.doc-prose td {
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+.doc-prose thead {
+  background: var(--surface);
+}
+/* Инлайн-код (вне shiki-блоков) */
+.doc-prose :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 0.1em 0.38em;
+}
+
+/* ─────────────── Shiki: layout + переключение темы ─────────────── */
+.shiki {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  overflow-x: auto;
+}
+.shiki code {
+  font-family: inherit;
+}
+html.dark .shiki,
+html.dark .shiki span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+  text-decoration: var(--shiki-dark-text-decoration) !important;
+}

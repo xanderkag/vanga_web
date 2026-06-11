@@ -1,0 +1,125 @@
+# Быстрый старт
+
+Минимальный happy-path интеграции — от файла до данных за четыре шага.
+
+1. **Отправляете файл** в `POST /api/v1/jobs` → получаете `job_id`.
+2. **Сервис обрабатывает** документ асинхронно (OCR → классификация →
+   извлечение → валидация).
+3. **Узнаёте о готовности** — вебхуком на ваш `webhook_url` или опросом
+   `GET /api/v1/jobs/{job_id}`.
+4. **Забираете JSON** с извлечёнными полями.
+
+<Callout type="info" title="Авторизация">
+  Все запросы к <code>/api/v1/*</code> требуют заголовок
+  <code>Authorization: Bearer &lt;TOKEN&gt;</code>. Токен выдаётся при
+  подключении к пилоту.
+</Callout>
+
+## Шаг 1. Загрузка документа
+
+<CodeTabs
+  samples={[
+    {
+      label: "curl",
+      language: "bash",
+      code: `curl -X POST https://api.docparser.example/api/v1/jobs \\
+  -H "Authorization: Bearer $TOKEN" \\
+  -F "file=@invoice.pdf" \\
+  -F "webhook_url=https://your.app/hooks/docparser"`,
+    },
+    {
+      label: "Node",
+      language: "javascript",
+      code: `const form = new FormData();
+form.append("file", await fileFromPath("invoice.pdf"));
+form.append("webhook_url", "https://your.app/hooks/docparser");
+
+const res = await fetch("https://api.docparser.example/api/v1/jobs", {
+  method: "POST",
+  headers: { Authorization: \`Bearer \${TOKEN}\` },
+  body: form,
+});
+const { job_id } = await res.json();`,
+    },
+    {
+      label: "Python",
+      language: "python",
+      code: `import requests
+
+res = requests.post(
+    "https://api.docparser.example/api/v1/jobs",
+    headers={"Authorization": f"Bearer {TOKEN}"},
+    files={"file": open("invoice.pdf", "rb")},
+    data={"webhook_url": "https://your.app/hooks/docparser"},
+)
+job_id = res.json()["job_id"]`,
+    },
+  ]}
+/>
+
+Ответ:
+
+```json
+{ "job_id": "5e9c…", "status": "pending" }
+```
+
+## Шаг 2. Дождаться результата
+
+Рекомендуемый путь — **вебхук**: как только job достигает терминального
+статуса (`done`, `failed` или `needs_review`), сервис сам пришлёт POST на ваш
+`webhook_url`. Подробнее — в разделе [Вебхуки](/docs/webhooks).
+
+Если вебхук недоступен — **опрос статуса**:
+
+<CodeTabs
+  samples={[
+    {
+      label: "curl",
+      language: "bash",
+      code: `curl https://api.docparser.example/api/v1/jobs/$JOB_ID \\
+  -H "Authorization: Bearer $TOKEN"`,
+    },
+    {
+      label: "Python",
+      language: "python",
+      code: `import time, requests
+
+while True:
+    job = requests.get(
+        f"https://api.docparser.example/api/v1/jobs/{job_id}",
+        headers={"Authorization": f"Bearer {TOKEN}"},
+    ).json()
+    if job["status"] in ("done", "failed", "needs_review"):
+        break
+    time.sleep(2)`,
+    },
+  ]}
+/>
+
+## Шаг 3. Результат
+
+Для готового job в поле `extracted` лежат структурированные данные:
+
+<JsonViewer
+  title="GET /api/v1/jobs/{job_id}"
+  data={{
+    job_id: "5e9c…",
+    status: "done",
+    type: "invoice",
+    confidence: 0.97,
+    extracted: {
+      number: "СЧ-1042",
+      date: "2026-05-19",
+      seller: { name: "ООО «Негабарит»", inn: "7802338201" },
+      buyer: { name: "ООО «Антарес»", inn: "7706094528" },
+      total: 486000.0,
+      vat: 81000.0,
+    },
+    validation: { inn: "ok", kpp: "ok", vat: "ok" },
+  }}
+/>
+
+<Callout type="success" title="Готово">
+  Дальше — справочник <a href="/docs/api">API</a> со всеми эндпоинтами и раздел{" "}
+  <a href="/docs/document-types">типы документов</a> со схемами вывода.
+</Callout>

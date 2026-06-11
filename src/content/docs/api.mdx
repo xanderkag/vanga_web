@@ -1,0 +1,99 @@
+# API
+
+Базовый префикс — `/api/v1`. Все запросы требуют заголовок
+`Authorization: Bearer <TOKEN>`. Тело загрузки — `multipart/form-data`,
+остальные запросы и ответы — `application/json`.
+
+<Callout type="info" title="Ориентир">
+  Сигнатуры ниже соответствуют контракту doc-service. Точные поля для вашей
+  версии всегда сверяйте со Swagger/OpenAPI вашего инстанса.
+</Callout>
+
+## Задания (jobs)
+
+<EndpointCard
+  method="POST"
+  path="/api/v1/jobs"
+  title="Загрузка файла, постановка в очередь обработки. Возвращает job_id."
+  params={[
+    { name: "file", type: "file", required: true, desc: "PDF / JPG / PNG документа (multipart)." },
+    { name: "webhook_url", type: "string", desc: "URL для доставки результата вебхуком." },
+    { name: "document_hint", type: "string", desc: "Подсказка типа (slug), если он известен заранее." },
+  ]}
+  response={`{
+  "job_id": "5e9c1f7a-…",
+  "status": "pending"
+}`}
+  statuses={[
+    { code: 201, desc: "job создан" },
+    { code: 400, desc: "файл не приложен / неверный формат" },
+    { code: 401, desc: "нет/неверный токен" },
+    { code: 415, desc: "неподдерживаемый тип файла" },
+  ]}
+/>
+
+<EndpointCard
+  method="GET"
+  path="/api/v1/jobs/{id}"
+  title="Статус и результат задания."
+  params={[{ name: "id", type: "uuid", required: true, desc: "Идентификатор job." }]}
+  response={`{
+  "job_id": "5e9c1f7a-…",
+  "status": "done",
+  "type": "invoice",
+  "confidence": 0.97,
+  "extracted": { "number": "СЧ-1042", "date": "2026-05-19", "total": 486000 },
+  "validation": { "inn": "ok", "vat": "ok" }
+}`}
+  statuses={[
+    { code: 200, desc: "ok" },
+    { code: 404, desc: "job не найден" },
+  ]}
+/>
+
+<EndpointCard
+  method="GET"
+  path="/api/v1/jobs"
+  title="Список заданий с пагинацией и фильтрами по статусу/типу."
+  params={[
+    { name: "status", type: "string", desc: "pending | processing | done | failed | needs_review" },
+    { name: "type", type: "string", desc: "slug типа документа" },
+    { name: "limit", type: "number", desc: "размер страницы (по умолчанию 50)" },
+  ]}
+  statuses={[{ code: 200, desc: "ok" }]}
+/>
+
+<EndpointCard
+  method="GET"
+  path="/api/v1/jobs/{id}/raw-text"
+  title="Сырой текст после OCR — для отладки и ручной сверки."
+  params={[{ name: "id", type: "uuid", required: true, desc: "Идентификатор job." }]}
+  statuses={[
+    { code: 200, desc: "ok" },
+    { code: 404, desc: "job не найден" },
+  ]}
+/>
+
+<EndpointCard
+  method="POST"
+  path="/api/v1/jobs/{id}/reprocess"
+  title="Повторно прогнать документ через пайплайн (например, после правки типа)."
+  params={[{ name: "id", type: "uuid", required: true, desc: "Идентификатор job." }]}
+  statuses={[
+    { code: 202, desc: "поставлен на переобработку" },
+    { code: 404, desc: "job не найден" },
+  ]}
+/>
+
+<EndpointCard
+  method="POST"
+  path="/api/v1/jobs/{id}/redeliver-webhook"
+  title="Повторно доставить вебхук по терминальному job (после починки приёмника)."
+  params={[{ name: "id", type: "uuid", required: true, desc: "Идентификатор job." }]}
+  statuses={[
+    { code: 202, desc: "доставка поставлена в очередь" },
+    { code: 409, desc: "job ещё не в терминальном статусе" },
+  ]}
+/>
+
+Дальше — как устроена доставка результата: [Вебхуки](/docs/webhooks).

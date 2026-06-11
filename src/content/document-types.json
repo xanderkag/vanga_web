@@ -1,0 +1,163 @@
+{
+  "categories": {
+    "transport": "Транспорт",
+    "accounting": "Бухгалтерия",
+    "legal": "Юридические"
+  },
+  "phases": {
+    "regex": "Phase 1 · regex + LLM",
+    "llm": "Phase 2 · LLM-extract"
+  },
+  "types": [
+    {
+      "slug": "invoice",
+      "name": "Счёт на оплату",
+      "category": "accounting",
+      "phase": "regex",
+      "tier": "stable",
+      "icon": "ReceiptText",
+      "summary": "Реквизиты сторон, позиции, суммы, НДС, итог к оплате.",
+      "hasSchema": true
+    },
+    {
+      "slug": "factInvoice",
+      "name": "Счёт-фактура",
+      "category": "accounting",
+      "phase": "regex",
+      "tier": "stable",
+      "icon": "FileSpreadsheet",
+      "summary": "Налоговый документ: продавец/покупатель, ИНН/КПП, ставки и суммы НДС.",
+      "hasSchema": true
+    },
+    {
+      "slug": "UPD",
+      "name": "УПД",
+      "category": "accounting",
+      "phase": "regex",
+      "tier": "stable",
+      "icon": "FileCheck2",
+      "summary": "Универсальный передаточный документ — счёт-фактура + накладная в одном.",
+      "hasSchema": true
+    },
+    {
+      "slug": "TTN",
+      "name": "Транспортная накладная (ТТН)",
+      "category": "transport",
+      "phase": "regex",
+      "tier": "stable",
+      "icon": "Truck",
+      "summary": "Грузоотправитель, перевозчик, маршрут, груз, госномера ТС.",
+      "hasSchema": true
+    },
+    {
+      "slug": "CMR",
+      "name": "Международная накладная CMR",
+      "category": "transport",
+      "phase": "regex",
+      "tier": "stable",
+      "icon": "Globe",
+      "summary": "Международная товарно-транспортная накладная по конвенции CMR.",
+      "hasSchema": true
+    },
+    {
+      "slug": "AKT",
+      "name": "Акт оказанных услуг",
+      "category": "accounting",
+      "phase": "regex",
+      "tier": "stable",
+      "icon": "FileSignature",
+      "summary": "Акт сдачи-приёмки оказанных услуг / выполненных работ.",
+      "hasSchema": true
+    },
+    {
+      "slug": "transport_invoice",
+      "name": "Счёт на транспортные услуги",
+      "category": "transport",
+      "phase": "llm",
+      "tier": "beta",
+      "icon": "FileText",
+      "summary": "Счёт за перевозку: маршрут, ставка, доп. услуги, простой.",
+      "hasSchema": false
+    },
+    {
+      "slug": "transport_request",
+      "name": "Заявка на перевозку",
+      "category": "transport",
+      "phase": "llm",
+      "tier": "beta",
+      "icon": "ClipboardList",
+      "summary": "Заявка/заказ на транспортировку: даты, адреса, параметры груза.",
+      "hasSchema": false
+    },
+    {
+      "slug": "waybill",
+      "name": "Путевой лист",
+      "category": "transport",
+      "phase": "llm",
+      "tier": "beta",
+      "icon": "Route",
+      "summary": "Путевой лист водителя: ТС, пробег, ГСМ, маршрут.",
+      "hasSchema": false
+    },
+    {
+      "slug": "commercial_invoice",
+      "name": "Инвойс (ВЭД)",
+      "category": "legal",
+      "phase": "llm",
+      "tier": "beta",
+      "icon": "Banknote",
+      "summary": "Commercial invoice для ВЭД: товары, Incoterms, валюта, страна.",
+      "hasSchema": false
+    },
+    {
+      "slug": "packing_list",
+      "name": "Упаковочный лист",
+      "category": "transport",
+      "phase": "llm",
+      "tier": "beta",
+      "icon": "Package",
+      "summary": "Packing list: места, вес брутто/нетто, габариты, артикулы.",
+      "hasSchema": false
+    },
+    {
+      "slug": "contract",
+      "name": "Договор",
+      "category": "legal",
+      "phase": "llm",
+      "tier": "experimental",
+      "icon": "ScrollText",
+      "summary": "Договор: стороны, предмет, сумма, сроки, реквизиты.",
+      "hasSchema": false
+    },
+    {
+      "slug": "specification",
+      "name": "Спецификация",
+      "category": "legal",
+      "phase": "llm",
+      "tier": "experimental",
+      "icon": "ListChecks",
+      "summary": "Спецификация к договору: номенклатура, количество, цены.",
+      "hasSchema": false
+    },
+    {
+      "slug": "torg12",
+      "name": "Товарная накладная ТОРГ-12",
+      "category": "accounting",
+      "phase": "llm",
+      "tier": "beta",
+      "icon": "Boxes",
+      "summary": "ТОРГ-12: грузоотправитель/получатель, позиции, суммы, подписи.",
+      "hasSchema": false
+    },
+    {
+      "slug": "payment_order",
+      "name": "Платёжное поручение",
+      "category": "accounting",
+      "phase": "llm",
+      "tier": "experimental",
+      "icon": "ArrowLeftRight",
+      "summary": "Платёжное поручение: плательщик, получатель, БИК, сумма, назначение.",
+      "hasSchema": false
+    }
+  ]
+}

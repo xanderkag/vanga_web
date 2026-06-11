@@ -1,0 +1,94 @@
+# Вебхуки
+
+Когда job, созданный через `POST /api/v1/jobs`, достигает терминального
+статуса (`done`, `failed` или `needs_review`), сервис доставляет **один
+HTTP POST** на `webhook_url`, указанный при создании задания. Ваш приёмник
+реализует один эндпоинт по этому контракту.
+
+## Формат payload
+
+<JsonViewer
+  title="POST на ваш webhook_url"
+  data={{
+    version: "1.0.0",
+    job_id: "5e9c1f7a-…",
+    status: "done",
+    type: "invoice",
+    confidence: 0.97,
+    extracted: {
+      number: "СЧ-1042",
+      date: "2026-05-19",
+      seller: { name: "ООО «Негабарит»", inn: "7802338201" },
+      total: 486000.0,
+      vat: 81000.0,
+    },
+    validation: { inn: "ok", kpp: "ok", vat: "ok" },
+    delivered_at: "2026-05-19T11:04:21Z",
+  }}
+/>
+
+Заголовки доставки:
+
+```http
+Content-Type: application/json
+X-Parsdocs-Signature: sha256=<hex>
+X-Parsdocs-Delivery: <uuid>
+X-Parsdocs-Event: job.done
+```
+
+## Проверка подписи (HMAC-SHA256)
+
+Каждый запрос подписан общим секретом. Вычислите HMAC-SHA256 от **сырого тела**
+запроса и сравните с заголовком `X-Parsdocs-Signature` в постоянном времени.
+
+<CodeTabs
+  samples={[
+    {
+      label: "Node",
+      language: "javascript",
+      code: `import crypto from "node:crypto";
+
+function verify(rawBody, signatureHeader, secret) {
+  const expected =
+    "sha256=" +
+    crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
+  const a = Buffer.from(signatureHeader);
+  const b = Buffer.from(expected);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}`,
+    },
+    {
+      label: "Python",
+      language: "python",
+      code: `import hmac, hashlib
+
+def verify(raw_body: bytes, signature_header: str, secret: str) -> bool:
+    expected = "sha256=" + hmac.new(
+        secret.encode(), raw_body, hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected, signature_header)`,
+    },
+  ]}
+/>
+
+<Callout type="warning" title="Сверяйте сырое тело">
+  Подпись считается по байтам тела <em>до</em> JSON-парсинга. Если фреймворк
+  уже распарсил body — берите оригинальный буфер, иначе подпись не сойдётся.
+</Callout>
+
+## Ретраи и идемпотентность
+
+- **Ретраи.** До 5 попыток с экспоненциальным backoff (кап 60 с). `2xx`
+  останавливает ретраи. `4xx` (кроме 408/429) — постоянная ошибка приёмника,
+  ретраи прекращаются. `5xx` / 408 / 429 / сетевые ошибки — повтор до
+  исчерпания попыток.
+- **Идемпотентность.** Приёмник **обязан** быть идемпотентным по `job_id`:
+  один и тот же job может прийти повторно.
+- **Ручная переотправка.** Починили приёмник — вызовите
+  `POST /api/v1/jobs/{id}/redeliver-webhook`.
+
+<Callout type="info" title="Версионирование">
+  Текущая версия контракта всегда echo'ится в <code>payload.version</code>.
+  Добавление необязательных полей обратно-совместимо и остаётся на v1;
+  переименование/удаление — breaking, поднимает версию.
+</Callout>
