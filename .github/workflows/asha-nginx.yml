@@ -1,5 +1,5 @@
 # Прописать маршрут docparser в общий nginx на Asha (через Actions — прямого SSH нет).
-# Хирургически: только аппенд одного server-блока + бэкап + `nginx -t` gate + откат.
+# Хирургически: аппенд одного server-блока (base64) + бэкап + `nginx -t` gate + откат.
 # Чужие конфиги не читаются и не логируются.
 name: asha-nginx-wire
 
@@ -22,55 +22,36 @@ jobs:
           chmod 600 ~/.ssh/asha
           ssh-keyscan -p 22 -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
 
-      - name: Append docparser server block (nginx -t gated)
+      - name: Append docparser block & reload (nginx -t gated)
+        env:
+          BLOCK_B64: CiMg4pSA4pSA4pSAIGRvY3BhcnNlciBwb3J0YWwgKGFkZGVkIGJ5IENJKSDilIDilIDilIAKc2VydmVyIHsKICAgIGxpc3RlbiA4MDsKICAgIHNlcnZlcl9uYW1lIGRvY3BhcnNlci4xMzUuMTA2LjE1OC4xNDMubmlwLmlvOwogICAgcmVzb2x2ZXIgMTI3LjAuMC4xMSB2YWxpZD0xMHM7CiAgICBsb2NhdGlvbiAvIHsKICAgICAgICBzZXQgJHVfZG9jcGFyc2VyIGRvY3BhcnNlci1wb3J0YWw7CiAgICAgICAgcHJveHlfcGFzcyBodHRwOi8vJHVfZG9jcGFyc2VyOjgwOwogICAgICAgIHByb3h5X3NldF9oZWFkZXIgSG9zdCAkaG9zdDsKICAgICAgICBwcm94eV9zZXRfaGVhZGVyIFgtUmVhbC1JUCAkcmVtb3RlX2FkZHI7CiAgICAgICAgcHJveHlfc2V0X2hlYWRlciBYLUZvcndhcmRlZC1Gb3IgJHByb3h5X2FkZF94X2ZvcndhcmRlZF9mb3I7CiAgICAgICAgcHJveHlfc2V0X2hlYWRlciBYLUZvcndhcmRlZC1Qcm90byAkc2NoZW1lOwogICAgfQp9Cg==
         run: |
-          ssh -i ~/.ssh/asha -o StrictHostKeyChecking=accept-new -p 22 root@"$HOST" 'bash -se' <<'REMOTE'
+          ssh -i ~/.ssh/asha -o StrictHostKeyChecking=accept-new -p 22 root@"$HOST" \
+            "BLOCK_B64='$BLOCK_B64' bash -se" <<'REMOTE'
           set -e
           NGINX=shared-nginx-1
           CONF=/opt/shared/nginx/conf.d/default.conf
           DOMAIN=docparser.135.106.158.143.nip.io
-
-          if ! docker ps --format '{{.Names}}' | grep -qx "$NGINX"; then
-            echo "✗ контейнер $NGINX не найден"; exit 1
-          fi
-          if [ ! -f "$CONF" ]; then echo "✗ нет $CONF"; exit 1; fi
-
+          docker ps --format '{{.Names}}' | grep -qx "$NGINX" || { echo "✗ нет контейнера $NGINX"; exit 1; }
+          [ -f "$CONF" ] || { echo "✗ нет $CONF"; exit 1; }
           if grep -q "$DOMAIN" "$CONF"; then
-            echo "→ блок $DOMAIN уже есть — переприменяю reload"
+            echo "→ блок уже есть, только reload"
           else
             BAK="${CONF}.bak.$(date +%s)"
             cp "$CONF" "$BAK"
             echo "→ бэкап: $BAK"
-            cat >> "$CONF" <<EOF
-
-# ─── docparser portal (added by CI $(date -u +%FT%TZ)) ───
-server {
-    listen 80;
-    server_name $DOMAIN;
-    resolver 127.0.0.11 valid=10s;
-    location / {
-        set \$u_docparser docparser-portal;
-        proxy_pass http://\$u_docparser:80;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-    }
-}
-EOF
-            echo "→ блок добавлен"
+            printf '%s' "$BLOCK_B64" | base64 -d >> "$CONF"
+            echo "→ блок docparser добавлен"
             if ! docker exec "$NGINX" nginx -t; then
               echo "✗ nginx -t не прошёл — откатываю"
               cp "$BAK" "$CONF"
               exit 1
             fi
           fi
-
           docker exec "$NGINX" nginx -s reload
           echo "✓ nginx reloaded"
           sleep 1
-          curl -s -o /dev/null -w "→ http://$DOMAIN (с сервера) = %{http_code}\n" \
-            -H "Host: $DOMAIN" http://127.0.0.1/ || true
+          curl -s -o /dev/null -w "→ internal (Host docparser) = %{http_code}\n" -H "Host: $DOMAIN" http://127.0.0.1/ || true
           REMOTE
 
       - name: Verify from runner
