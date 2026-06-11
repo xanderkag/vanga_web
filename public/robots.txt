@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://docparser.135.106.158.143.nip.io/sitemap.xml
