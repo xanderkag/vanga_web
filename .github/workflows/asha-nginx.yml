@@ -1,0 +1,80 @@
+# Прописать маршрут docparser в общий nginx на Asha (через Actions — прямого SSH нет).
+# Хирургически: только аппенд одного server-блока + бэкап + `nginx -t` gate + откат.
+# Чужие конфиги не читаются и не логируются.
+name: asha-nginx-wire
+
+on:
+  workflow_dispatch: {}
+
+env:
+  HOST: 135.106.158.143
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup SSH key
+        env:
+          KEY: ${{ secrets.SSH_PRIVATE_KEY_ASHA }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/asha
+          chmod 600 ~/.ssh/asha
+          ssh-keyscan -p 22 -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Append docparser server block (nginx -t gated)
+        run: |
+          ssh -i ~/.ssh/asha -o StrictHostKeyChecking=accept-new -p 22 root@"$HOST" 'bash -se' <<'REMOTE'
+          set -e
+          NGINX=shared-nginx-1
+          CONF=/opt/shared/nginx/conf.d/default.conf
+          DOMAIN=docparser.135.106.158.143.nip.io
+
+          if ! docker ps --format '{{.Names}}' | grep -qx "$NGINX"; then
+            echo "✗ контейнер $NGINX не найден"; exit 1
+          fi
+          if [ ! -f "$CONF" ]; then echo "✗ нет $CONF"; exit 1; fi
+
+          if grep -q "$DOMAIN" "$CONF"; then
+            echo "→ блок $DOMAIN уже есть — переприменяю reload"
+          else
+            BAK="${CONF}.bak.$(date +%s)"
+            cp "$CONF" "$BAK"
+            echo "→ бэкап: $BAK"
+            cat >> "$CONF" <<EOF
+
+# ─── docparser portal (added by CI $(date -u +%FT%TZ)) ───
+server {
+    listen 80;
+    server_name $DOMAIN;
+    resolver 127.0.0.11 valid=10s;
+    location / {
+        set \$u_docparser docparser-portal;
+        proxy_pass http://\$u_docparser:80;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+}
+EOF
+            echo "→ блок добавлен"
+            if ! docker exec "$NGINX" nginx -t; then
+              echo "✗ nginx -t не прошёл — откатываю"
+              cp "$BAK" "$CONF"
+              exit 1
+            fi
+          fi
+
+          docker exec "$NGINX" nginx -s reload
+          echo "✓ nginx reloaded"
+          sleep 1
+          curl -s -o /dev/null -w "→ http://$DOMAIN (с сервера) = %{http_code}\n" \
+            -H "Host: $DOMAIN" http://127.0.0.1/ || true
+          REMOTE
+
+      - name: Verify from runner
+        run: |
+          sleep 2
+          curl -s -o /dev/null -w "docparser.nip.io → HTTP %{http_code}\n" \
+            http://docparser.135.106.158.143.nip.io/ || echo "external curl failed"
