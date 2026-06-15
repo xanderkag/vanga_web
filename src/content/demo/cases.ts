@@ -1,10 +1,10 @@
 import type { DemoCaseFull } from "@/lib/demo-source";
 
 /**
- * Предзаписанные демо-кейсы. Поля и структура соответствуют выходу пайплайна
- * (типы invoice/factInvoice/UPD/TTN/CMR/AKT). Превью отрисовывается как
- * «бумага» из previewLines — реальные PNG-сканы можно подставить позже,
- * не меняя UI (см. StaticDemoSource).
+ * Предзаписанные демо-кейсы. `doc` — данные для отрисовки реалистичного
+ * превью документа (шапка, реквизиты, таблица, итоги, печать/подпись).
+ * `result` — предзаписанный выход пайплайна (тип/поля/валидация/тайминги).
+ * Данные синтетические, но в формате реальных российских документов.
  */
 export const demoCases: DemoCaseFull[] = [
   {
@@ -13,18 +13,40 @@ export const demoCases: DemoCaseFull[] = [
     docTypeSlug: "invoice",
     category: "accounting",
     icon: "ReceiptText",
-    previewTitle: "СЧЁТ НА ОПЛАТУ № СЧ-1042",
-    previewSubtitle: "от 19 мая 2026 г.",
-    previewLines: [
-      "Поставщик: ООО «Негабарит», ИНН 7802338201, КПП 780201001",
-      "Покупатель: ООО «Антарес», ИНН 7706094528",
-      "",
-      "1. Перевозка негабаритного груза СПб–Москва  ... 405 000,00",
-      "2. Услуги сопровождения  .......................  81 000,00",
-      "",
-      "Итого: 486 000,00    В т.ч. НДС 20%: 81 000,00",
-      "Всего к оплате: четыреста восемьдесят шесть тысяч руб.",
-    ],
+    doc: {
+      kind: "accounting",
+      org: "ООО «Негабарит»",
+      title: "Счёт на оплату № СЧ-1042",
+      number: "СЧ-1042",
+      date: "19 мая 2026 г.",
+      parties: [
+        {
+          role: "Поставщик",
+          name: "ООО «Негабарит»",
+          inn: "7802338201",
+          kpp: "780201001",
+          address: "194354, Санкт-Петербург, ул. Сикейроса, д. 6",
+        },
+        { role: "Покупатель", name: "ООО «Антарес»", inn: "7706094528" },
+      ],
+      items: [
+        {
+          name: "Перевозка негабаритного груза СПб — Москва",
+          qty: "1",
+          price: "405 000,00",
+          sum: "405 000,00",
+        },
+        {
+          name: "Услуги сопровождения (2 ед.)",
+          qty: "2",
+          price: "40 500,00",
+          sum: "81 000,00",
+        },
+      ],
+      total: "486 000,00",
+      vat: "81 000,00",
+      signer: "Ляпустин А. Ю.",
+    },
     result: {
       type: "invoice",
       confidence: 0.97,
@@ -73,18 +95,38 @@ export const demoCases: DemoCaseFull[] = [
     docTypeSlug: "factInvoice",
     category: "accounting",
     icon: "FileSpreadsheet",
-    previewTitle: "СЧЁТ-ФАКТУРА № 114",
-    previewSubtitle: "от 19 мая 2026 г.",
-    previewLines: [
-      "Продавец: ООО «Негабарит», ИНН/КПП 7802338201 / 780201001",
-      "Покупатель: ООО «Антарес», ИНН/КПП 7706094528 / 770601001",
-      "",
-      "Товары (работы, услуги) ... Стоимость без налога: 405 000,00",
-      "Налоговая ставка: 20%   Сумма налога: 79 800,00",
-      "Стоимость с налогом: 486 000,00",
-      "",
-      "(скан, подпись и печать)",
-    ],
+    doc: {
+      kind: "accounting",
+      org: "ООО «Негабарит»",
+      title: "Счёт-фактура № 114",
+      number: "114",
+      date: "19 мая 2026 г.",
+      parties: [
+        {
+          role: "Продавец",
+          name: "ООО «Негабарит»",
+          inn: "7802338201",
+          kpp: "780201001",
+        },
+        {
+          role: "Покупатель",
+          name: "ООО «Антарес»",
+          inn: "7706094528",
+          kpp: "770601001",
+        },
+      ],
+      items: [
+        {
+          name: "Транспортно-экспедиционные услуги",
+          qty: "1",
+          price: "405 000,00",
+          sum: "405 000,00",
+        },
+      ],
+      total: "486 000,00",
+      vat: "79 800,00",
+      signer: "Ляпустин А. Ю.",
+    },
     result: {
       type: "factInvoice",
       confidence: 0.93,
@@ -135,17 +177,28 @@ export const demoCases: DemoCaseFull[] = [
     docTypeSlug: "UPD",
     category: "accounting",
     icon: "FileCheck2",
-    previewTitle: "УНИВЕРСАЛЬНЫЙ ПЕРЕДАТОЧНЫЙ ДОКУМЕНТ",
-    previewSubtitle: "Статус: 1   № УПД-114 от 19.05.2026",
-    previewLines: [
-      "Продавец: ООО «Негабарит», ИНН 7802338201",
-      "Покупатель: ООО «Антарес», ИНН 7706094528",
-      "",
-      "Наименование ... Кол-во ... Цена ... Стоимость с НДС",
-      "Транспортные услуги ... 1 ... 486 000 ... 486 000,00",
-      "",
-      "Всего к оплате: 486 000,00   В т.ч. НДС: 81 000,00",
-    ],
+    doc: {
+      kind: "accounting",
+      org: "ООО «Негабарит»",
+      title: "Универсальный передаточный документ",
+      number: "УПД-114",
+      date: "19 мая 2026 г.",
+      parties: [
+        { role: "Продавец", name: "ООО «Негабарит»", inn: "7802338201" },
+        { role: "Покупатель", name: "ООО «Антарес»", inn: "7706094528" },
+      ],
+      items: [
+        {
+          name: "Транспортные услуги по договору № 7",
+          qty: "1",
+          price: "405 000,00",
+          sum: "486 000,00",
+        },
+      ],
+      total: "486 000,00",
+      vat: "81 000,00",
+      signer: "Ляпустин А. Ю.",
+    },
     result: {
       type: "UPD",
       confidence: 0.98,
@@ -190,18 +243,26 @@ export const demoCases: DemoCaseFull[] = [
     docTypeSlug: "TTN",
     category: "transport",
     icon: "Truck",
-    previewTitle: "ТРАНСПОРТНАЯ НАКЛАДНАЯ № 884",
-    previewSubtitle: "от 18 мая 2026 г.",
-    previewLines: [
-      "Грузоотправитель: ООО «Негабарит»",
-      "Грузополучатель: ООО «Антарес»",
-      "Перевозчик: ИП Сидоров А. В.",
-      "",
-      "ТС: МАЗ 6430, госномер Е 432 КХ 178",
-      "Прицеп: АМ 1789 78",
-      "Груз: оборудование, 12 мест, 18 600 кг",
-      "Маршрут: Санкт-Петербург → Москва",
-    ],
+    doc: {
+      kind: "transport",
+      org: "ООО «Негабарит»",
+      title: "Транспортная накладная № 884",
+      number: "884",
+      date: "18 мая 2026 г.",
+      parties: [
+        { role: "Грузоотправитель", name: "ООО «Негабарит»", inn: "7802338201" },
+        { role: "Грузополучатель", name: "ООО «Антарес»", inn: "7706094528" },
+        { role: "Перевозчик", name: "ИП Сидоров А. В.", inn: "781305229100" },
+      ],
+      rows: [
+        { k: "Транспортное средство", v: "МАЗ 6430, Е 432 КХ 178" },
+        { k: "Прицеп", v: "АМ 1789 78" },
+        { k: "Груз", v: "Оборудование, 12 мест" },
+        { k: "Масса брутто", v: "18 600 кг" },
+        { k: "Маршрут", v: "Санкт-Петербург → Москва" },
+      ],
+      signer: "Сидоров А. В.",
+    },
     result: {
       type: "TTN",
       confidence: 0.95,
@@ -247,16 +308,25 @@ export const demoCases: DemoCaseFull[] = [
     docTypeSlug: "CMR",
     category: "transport",
     icon: "Globe",
-    previewTitle: "CMR — INTERNATIONAL CONSIGNMENT NOTE",
-    previewSubtitle: "№ 0042189",
-    previewLines: [
-      "1 Sender: OOO Negabarit, St. Petersburg, RU",
-      "2 Consignee: Antares GmbH, Berlin, DE",
-      "4 Place of loading: Saint-Petersburg (RU)",
-      "5 Place of delivery: Berlin (DE)",
-      "16 Carrier: TransEU sp. z o.o.",
-      "Goods: machinery, 12 pkg, 18 600 kg",
-    ],
+    doc: {
+      kind: "transport",
+      org: "OOO Negabarit",
+      title: "CMR — International Consignment Note № 0042189",
+      number: "0042189",
+      date: "17 мая 2026 г.",
+      parties: [
+        { role: "Sender (1)", name: "OOO Negabarit", address: "St. Petersburg, RU" },
+        { role: "Consignee (2)", name: "Antares GmbH", address: "Berlin, DE" },
+        { role: "Carrier (16)", name: "TransEU sp. z o.o.", address: "Warszawa, PL" },
+      ],
+      rows: [
+        { k: "Place of loading (4)", v: "Saint-Petersburg (RU)" },
+        { k: "Place of delivery (5)", v: "Berlin (DE)" },
+        { k: "Goods (6–9)", v: "Machinery, 12 packages" },
+        { k: "Gross weight (11)", v: "18 600 kg" },
+      ],
+      signer: "TransEU sp. z o.o.",
+    },
     result: {
       type: "CMR",
       confidence: 0.9,
@@ -300,17 +370,28 @@ export const demoCases: DemoCaseFull[] = [
     docTypeSlug: "AKT",
     category: "accounting",
     icon: "FileSignature",
-    previewTitle: "АКТ № 207 оказанных услуг",
-    previewSubtitle: "от 20 мая 2026 г.",
-    previewLines: [
-      "Исполнитель: ООО «Негабарит», ИНН 7802338201",
-      "Заказчик: ООО «Антарес», ИНН 7706094528",
-      "",
-      "Услуга: перевозка негабаритного груза по маршруту СПб–Москва",
-      "Стоимость: 486 000,00, в т.ч. НДС 20% — 81 000,00",
-      "",
-      "Услуги оказаны полностью, претензий нет.",
-    ],
+    doc: {
+      kind: "accounting",
+      org: "ООО «Негабарит»",
+      title: "Акт № 207 оказанных услуг",
+      number: "207",
+      date: "20 мая 2026 г.",
+      parties: [
+        { role: "Исполнитель", name: "ООО «Негабарит»", inn: "7802338201" },
+        { role: "Заказчик", name: "ООО «Антарес»", inn: "7706094528" },
+      ],
+      items: [
+        {
+          name: "Перевозка негабаритного груза СПб — Москва",
+          qty: "1",
+          price: "405 000,00",
+          sum: "486 000,00",
+        },
+      ],
+      total: "486 000,00",
+      vat: "81 000,00",
+      signer: "Ляпустин А. Ю.",
+    },
     result: {
       type: "AKT",
       confidence: 0.96,

@@ -29,8 +29,18 @@ export function Footer() {
             </div>
           </div>
         </div>
-        <div className="mt-8 border-t border-[var(--border)] pt-6 text-xs">
-          © {new Date().getFullYear()} Doc Parser · Big Brother
+        <div className="mt-8 space-y-2 border-t border-[var(--border)] pt-6 text-xs">
+          <p className="leading-relaxed">
+            Исполнитель: Индивидуальный предприниматель Ляпустин Александр
+            Юрьевич · ИНН 780223828359 · ОГРНИП 324784700397886 ·{" "}
+            <a
+              href="mailto:liapustin@gmail.com"
+              className="hover:text-[var(--fg)]"
+            >
+              liapustin@gmail.com
+            </a>
+          </p>
+          <p>© {new Date().getFullYear()} Doc Parser · Big Brother</p>
         </div>
       </div>
     </footer>

@@ -33,16 +33,47 @@ export interface DemoField {
   value: string;
 }
 
-/** Карточка кейса для галереи + данные превью (отрисовывается как «бумага»). */
+/** Сторона документа (продавец/покупатель/перевозчик…). */
+export interface DocParty {
+  role: string;
+  name: string;
+  inn?: string;
+  kpp?: string;
+  address?: string;
+}
+
+/** Позиция табличной части документа. */
+export interface DocItem {
+  name: string;
+  qty?: string;
+  price?: string;
+  sum: string;
+}
+
+/** Данные для отрисовки реалистичного превью документа. */
+export interface DocRender {
+  kind: "accounting" | "transport";
+  org: string; // на чьём бланке / печати
+  title: string;
+  number: string;
+  date: string;
+  parties: DocParty[];
+  items?: DocItem[];
+  total?: string;
+  vat?: string;
+  /** Доп. поля для транспортных (маршрут, ТС, груз). */
+  rows?: { k: string; v: string }[];
+  signer?: string;
+}
+
+/** Карточка кейса для галереи + данные превью (отрисовывается как документ). */
 export interface DemoCase {
   id: string;
   label: string;
   docTypeSlug: string;
   category: CategoryKey;
   icon: string;
-  previewTitle: string;
-  previewSubtitle?: string;
-  previewLines: string[];
+  doc: DocRender;
 }
 
 /** Результат прогона — предзаписанный выход пайплайна. */
