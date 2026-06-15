@@ -215,7 +215,15 @@ export function Pilot() {
               className="mt-0.5 h-4 w-4 accent-[var(--color-accent)]"
             />
             <span className="text-[var(--muted)]">
-              Согласен на обработку персональных данных для связи по заявке.
+              Согласен на обработку персональных данных для связи по заявке —
+              см.{" "}
+              <Link
+                to="/legal/privacy"
+                className="text-[var(--color-accent)] hover:underline"
+              >
+                Политику обработки ПДн
+              </Link>
+              .
             </span>
           </label>
           {errors.consent && (

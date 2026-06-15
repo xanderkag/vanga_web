@@ -19,6 +19,13 @@ export function Footer() {
               <Link to="/pilot" className="hover:text-[var(--fg)]">Пилот</Link>
             </div>
             <div className="flex flex-col gap-2">
+              <span className="text-[var(--fg)] font-medium">Документы</span>
+              <Link to="/legal/privacy" className="hover:text-[var(--fg)]">Политика ПДн</Link>
+              <Link to="/legal/terms" className="hover:text-[var(--fg)]">Соглашение</Link>
+              <Link to="/legal/offer" className="hover:text-[var(--fg)]">Оферта</Link>
+              <Link to="/legal/cookie" className="hover:text-[var(--fg)]">Cookie</Link>
+            </div>
+            <div className="flex flex-col gap-2">
               <span className="text-[var(--fg)] font-medium">Контакт</span>
               <a href="mailto:liapustin@gmail.com" className="hover:text-[var(--fg)]">
                 liapustin@gmail.com

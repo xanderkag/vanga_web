@@ -9,6 +9,8 @@ import { Pricing } from "@/routes/Pricing";
 import { Login } from "@/routes/Login";
 import { Register } from "@/routes/Register";
 import { Dashboard } from "@/routes/Dashboard";
+import { Legal } from "@/routes/Legal";
+import { CookieBanner } from "@/components/layout/CookieBanner";
 
 function NotFound() {
   return (
@@ -34,10 +36,12 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/app" element={<Dashboard />} />
+            <Route path="/legal/*" element={<Legal />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
         <Footer />
+        <CookieBanner />
       </div>
     </BrowserRouter>
   );

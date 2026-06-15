@@ -99,8 +99,15 @@ export function Register() {
         </Button>
       </form>
       <p className="mt-4 text-center text-xs text-[var(--muted)]">
-        Нажимая «Создать аккаунт», вы соглашаетесь с условиями и политикой
-        обработки данных.
+        Нажимая «Создать аккаунт», вы принимаете{" "}
+        <Link to="/legal/terms" className="text-[var(--color-accent)] hover:underline">
+          Пользовательское соглашение
+        </Link>{" "}
+        и{" "}
+        <Link to="/legal/privacy" className="text-[var(--color-accent)] hover:underline">
+          Политику обработки ПДн
+        </Link>
+        .
       </p>
     </AuthShell>
   );
