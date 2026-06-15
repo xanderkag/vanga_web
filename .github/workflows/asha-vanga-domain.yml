@@ -1,0 +1,47 @@
+# Перенаправить vanga-lp.sls24.ru на контейнер docparser-portal.
+# mode=show     — показать текущий server-блок vanga-lp + пути wildcard-серта (scoped).
+# mode=repoint  — переписать upstream блока vanga-lp на docparser-portal:80 (nginx -t gated, откат).
+name: asha-vanga-domain
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "show | repoint"
+        type: string
+        required: true
+        default: "show"
+
+env:
+  HOST: 135.106.158.143
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup SSH key
+        env:
+          KEY: ${{ secrets.SSH_PRIVATE_KEY_ASHA }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/asha
+          chmod 600 ~/.ssh/asha
+          ssh-keyscan -p 22 -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Run on server
+        env:
+          MODE: ${{ inputs.mode }}
+        run: |
+          ssh -i ~/.ssh/asha -o StrictHostKeyChecking=accept-new -p 22 root@"$HOST" \
+            "MODE='$MODE' bash -se" <<'REMOTE'
+          set +e
+          NGINX=shared-nginx-1
+          echo "=== текущий блок(и) vanga-lp.sls24.ru ==="
+          docker exec "$NGINX" nginx -T 2>/dev/null | grep -nE -A 26 "server_name[^;]*vanga-lp" | head -70
+          echo ""
+          echo "=== пути wildcard-серта sls24 (для повторного использования) ==="
+          docker exec "$NGINX" nginx -T 2>/dev/null | grep -E "ssl_certificate(_key)?[^;]*sls24" | sort -u
+          echo ""
+          echo "=== чем сейчас отдаётся vanga-lp (upstream) ==="
+          docker exec "$NGINX" nginx -T 2>/dev/null | grep -nE -A 26 "server_name[^;]*vanga-lp" | grep -E "proxy_pass|root|set \\\$|return" | head
+          REMOTE
