@@ -38,12 +38,18 @@ jobs:
           CONF=/opt/shared/nginx/conf.d/default.conf
           if [ "$MODE" = "repoint" ]; then
             set -e
-            [ -f "$CONF" ] || { echo "✗ нет $CONF"; exit 1; }
-            if grep -qF 'set $upstream "docparser-portal"' "$CONF" && ! grep -qF 'set $upstream "vanga-lp"' "$CONF"; then
-              echo "→ уже на docparser-portal, только reload"
-            elif ! grep -qF 'set $upstream "vanga-lp"' "$CONF"; then
-              echo "✗ не нашёл 'set \$upstream \"vanga-lp\"' — структура изменилась, стоп"; exit 1
+            # блок vanga-lp может лежать в любом include-файле — ищем по строке
+            CONF=$(grep -rlF 'set $upstream "vanga-lp"' /opt/shared/nginx/ 2>/dev/null | head -1)
+            if [ -z "$CONF" ]; then
+              if grep -rlqF 'set $upstream "docparser-portal"' /opt/shared/nginx/ 2>/dev/null; then
+                echo "→ vanga-lp уже на docparser-portal, только reload"
+              else
+                echo "✗ не нашёл файл с 'set \$upstream \"vanga-lp\"'. Что есть по vanga-lp:"
+                grep -rlnF 'vanga-lp' /opt/shared/nginx/ 2>/dev/null | head
+                exit 1
+              fi
             else
+              echo "→ файл с блоком vanga-lp: $CONF"
               BAK="${CONF}.bak.$(date +%s)"
               cp "$CONF" "$BAK"; echo "→ бэкап $BAK"
               sed -i 's/set \$upstream "vanga-lp";/set $upstream "docparser-portal";/' "$CONF"
