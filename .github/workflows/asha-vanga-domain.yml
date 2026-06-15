@@ -39,9 +39,9 @@ jobs:
           if [ "$MODE" = "repoint" ]; then
             set -e
             [ -f "$CONF" ] || { echo "✗ нет $CONF"; exit 1; }
-            if grep -q 'set $upstream "docparser-portal"' "$CONF" && ! grep -q 'set $upstream "vanga-lp"' "$CONF"; then
+            if grep -qF 'set $upstream "docparser-portal"' "$CONF" && ! grep -qF 'set $upstream "vanga-lp"' "$CONF"; then
               echo "→ уже на docparser-portal, только reload"
-            elif ! grep -q 'set $upstream "vanga-lp"' "$CONF"; then
+            elif ! grep -qF 'set $upstream "vanga-lp"' "$CONF"; then
               echo "✗ не нашёл 'set \$upstream \"vanga-lp\"' — структура изменилась, стоп"; exit 1
             else
               BAK="${CONF}.bak.$(date +%s)"
