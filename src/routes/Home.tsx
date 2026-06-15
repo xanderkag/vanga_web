@@ -79,17 +79,20 @@ function Hero() {
               вебхуки. На выходе — готовый JSON для 1С, ERP и CRM.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link to="/demo">
+              <Link to="/register">
                 <Button size="lg">
-                  Посмотреть демо <ArrowRight className="h-4 w-4" />
+                  Начать бесплатно <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <Link to="/docs">
+              <Link to="/demo">
                 <Button size="lg" variant="outline">
-                  Документация
+                  Посмотреть демо
                 </Button>
               </Link>
             </div>
+            <p className="mt-3 text-xs text-[var(--muted)]">
+              14 дней бесплатно · карта не нужна · self-hosted по запросу
+            </p>
           </div>
 
           <HeroSnippet />

@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://docparser.135.106.158.143.nip.io/sitemap.xml
+Disallow: /app
+
+Sitemap: https://vanga-lp.sls24.ru/sitemap.xml

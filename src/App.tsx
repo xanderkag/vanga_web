@@ -5,6 +5,10 @@ import { Home } from "@/routes/Home";
 import { Docs } from "@/routes/Docs";
 import { Demo } from "@/routes/Demo";
 import { Pilot } from "@/routes/Pilot";
+import { Pricing } from "@/routes/Pricing";
+import { Login } from "@/routes/Login";
+import { Register } from "@/routes/Register";
+import { Dashboard } from "@/routes/Dashboard";
 
 function NotFound() {
   return (
@@ -26,6 +30,10 @@ export default function App() {
             <Route path="/docs/*" element={<Docs />} />
             <Route path="/demo" element={<Demo />} />
             <Route path="/pilot" element={<Pilot />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/app" element={<Dashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
