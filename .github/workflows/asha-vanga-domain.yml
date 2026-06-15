@@ -34,14 +34,42 @@ jobs:
         run: |
           ssh -i ~/.ssh/asha -o StrictHostKeyChecking=accept-new -p 22 root@"$HOST" \
             "MODE='$MODE' bash -se" <<'REMOTE'
-          set +e
           NGINX=shared-nginx-1
-          echo "=== текущий блок(и) vanga-lp.sls24.ru ==="
-          docker exec "$NGINX" nginx -T 2>/dev/null | grep -nE -A 26 "server_name[^;]*vanga-lp" | head -70
-          echo ""
-          echo "=== пути wildcard-серта sls24 (для повторного использования) ==="
-          docker exec "$NGINX" nginx -T 2>/dev/null | grep -E "ssl_certificate(_key)?[^;]*sls24" | sort -u
-          echo ""
-          echo "=== чем сейчас отдаётся vanga-lp (upstream) ==="
-          docker exec "$NGINX" nginx -T 2>/dev/null | grep -nE -A 26 "server_name[^;]*vanga-lp" | grep -E "proxy_pass|root|set \\\$|return" | head
+          CONF=/opt/shared/nginx/conf.d/default.conf
+          if [ "$MODE" = "repoint" ]; then
+            set -e
+            [ -f "$CONF" ] || { echo "✗ нет $CONF"; exit 1; }
+            if grep -q 'set $upstream "docparser-portal"' "$CONF" && ! grep -q 'set $upstream "vanga-lp"' "$CONF"; then
+              echo "→ уже на docparser-portal, только reload"
+            elif ! grep -q 'set $upstream "vanga-lp"' "$CONF"; then
+              echo "✗ не нашёл 'set \$upstream \"vanga-lp\"' — структура изменилась, стоп"; exit 1
+            else
+              BAK="${CONF}.bak.$(date +%s)"
+              cp "$CONF" "$BAK"; echo "→ бэкап $BAK"
+              sed -i 's/set \$upstream "vanga-lp";/set $upstream "docparser-portal";/' "$CONF"
+              echo "→ vanga-lp upstream переключён на docparser-portal"
+              grep -nE 'server_name vanga-lp|set \$upstream "docparser-portal"' "$CONF" | head
+              if ! docker exec "$NGINX" nginx -t; then
+                echo "✗ nginx -t FAIL → откат"; cp "$BAK" "$CONF"; exit 1
+              fi
+            fi
+            docker exec "$NGINX" nginx -s reload
+            echo "✓ reloaded"
+            sleep 1
+            curl -sk -o /dev/null -w "→ internal vanga-lp /pricing = %{http_code}\n" -H "Host: vanga-lp.sls24.ru" https://127.0.0.1/pricing || true
+          else
+            set +e
+            echo "=== текущий блок(и) vanga-lp.sls24.ru ==="
+            docker exec "$NGINX" nginx -T 2>/dev/null | grep -nE -A 26 "server_name[^;]*vanga-lp" | head -70
+            echo "=== пути wildcard-серта sls24 ==="
+            docker exec "$NGINX" nginx -T 2>/dev/null | grep -E "ssl_certificate(_key)?[^;]*sls24" | sort -u
+          fi
           REMOTE
+
+      - name: Verify from runner (repoint)
+        if: ${{ inputs.mode == 'repoint' }}
+        run: |
+          sleep 2
+          curl -sk -o /dev/null -w "vanga-lp.sls24.ru/ → %{http_code}\n" https://vanga-lp.sls24.ru/ || true
+          curl -sk -o /dev/null -w "vanga-lp.sls24.ru/pricing → %{http_code}\n" https://vanga-lp.sls24.ru/pricing || true
+          echo "title:"; curl -sk https://vanga-lp.sls24.ru/ | grep -oiE "<title>[^<]*</title>" | head -1 || true
