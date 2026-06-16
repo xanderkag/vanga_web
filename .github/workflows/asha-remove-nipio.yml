@@ -1,0 +1,51 @@
+# Удалить server-блок docparser.135.106.158.143.nip.io из общего nginx.
+# Контейнер docparser-portal НЕ трогаем (на нём живёт vanga-lp.sls24.ru).
+# Безопасно: бэкап + Python-удаление блока (brace-match) + nginx -t gate + откат.
+name: asha-remove-nipio
+
+on:
+  workflow_dispatch: {}
+
+env:
+  HOST: 135.106.158.143
+
+jobs:
+  remove:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup SSH key
+        env:
+          KEY: ${{ secrets.SSH_PRIVATE_KEY_ASHA }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/asha
+          chmod 600 ~/.ssh/asha
+          ssh-keyscan -p 22 -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Remove nip.io block & reload
+        env:
+          PY_B64: aW1wb3J0IHJlLCBzeXMKRE9NQUlOID0gImRvY3BhcnNlci4xMzUuMTA2LjE1OC4xNDMubmlwLmlvIgpjb25mID0gc3lzLmFyZ3ZbMV0KcyA9IG9wZW4oY29uZikucmVhZCgpCnNwYW5zID0gW10KZm9yIG0gaW4gcmUuZmluZGl0ZXIocidzZXJ2ZXJccypceycsIHMpOgogICAgYiA9IHMuaW5kZXgoJ3snLCBtLnN0YXJ0KCkpOyBkZXB0aCA9IDA7IGogPSBiCiAgICB3aGlsZSBqIDwgbGVuKHMpOgogICAgICAgIGlmIHNbal0gPT0gJ3snOiBkZXB0aCArPSAxCiAgICAgICAgZWxpZiBzW2pdID09ICd9JzoKICAgICAgICAgICAgZGVwdGggLT0gMQogICAgICAgICAgICBpZiBkZXB0aCA9PSAwOiBicmVhawogICAgICAgIGogKz0gMQogICAgc3BhbnMuYXBwZW5kKChtLnN0YXJ0KCksIGogKyAxKSkKcmVtb3ZlID0gWyhhLCBiKSBmb3IgKGEsIGIpIGluIHNwYW5zIGlmIERPTUFJTiBpbiBzW2E6Yl1dCmlmIG5vdCByZW1vdmU6CiAgICBwcmludCgiTk9USElORyIpOyBzeXMuZXhpdCgwKQpyZXN1bHQgPSBzCmZvciAoYSwgYikgaW4gc29ydGVkKHJlbW92ZSwgcmV2ZXJzZT1UcnVlKToKICAgIHByZSA9IHJlc3VsdFs6YV0KICAgIGxpbmVzID0gcHJlLnNwbGl0KCdcbicpCiAgICB3aGlsZSBsaW5lcyBhbmQgbGluZXNbLTFdLnN0cmlwKCkgPT0gJyc6CiAgICAgICAgbGluZXMucG9wKCkKICAgIGlmIGxpbmVzIGFuZCBsaW5lc1stMV0ubHN0cmlwKCkuc3RhcnRzd2l0aCgnIycpIGFuZCAnZG9jcGFyc2VyJyBpbiBsaW5lc1stMV0ubG93ZXIoKToKICAgICAgICBsaW5lcy5wb3AoKQogICAgbmV3X3ByZSA9ICdcbicuam9pbihsaW5lcykKICAgIGlmIG5ld19wcmUgYW5kIG5vdCBuZXdfcHJlLmVuZHN3aXRoKCdcbicpOgogICAgICAgIG5ld19wcmUgKz0gJ1xuJwogICAgcmVzdWx0ID0gbmV3X3ByZSArIHJlc3VsdFtiOl0Kb3Blbihjb25mLCAndycpLndyaXRlKHJlc3VsdCkKcHJpbnQoIlJFTU9WRUQiLCBsZW4ocmVtb3ZlKSwgImJsb2NrKHMpIikK
+        run: |
+          ssh -i ~/.ssh/asha -o StrictHostKeyChecking=accept-new -p 22 root@"$HOST" \
+            "PY_B64='$PY_B64' bash -se" <<'REMOTE'
+          set -e
+          NGINX=shared-nginx-1
+          CONF=$(grep -rl 'docparser.135.106.158.143.nip.io' /opt/shared/nginx/ 2>/dev/null | grep -v '\.bak' | head -1)
+          if [ -z "$CONF" ]; then echo "→ блок nip.io не найден — нечего удалять"; exit 0; fi
+          echo "→ файл: $CONF"
+          BAK="${CONF}.bak.$(date +%s)"; cp "$CONF" "$BAK"; echo "→ бэкап $BAK"
+          printf '%s' "$PY_B64" | base64 -d > /tmp/rm_nipio.py
+          python3 /tmp/rm_nipio.py "$CONF"
+          if ! docker exec "$NGINX" nginx -t; then echo "✗ nginx -t FAIL → откат"; cp "$BAK" "$CONF"; exit 1; fi
+          docker exec "$NGINX" nginx -s reload
+          echo "✓ reloaded"
+          sleep 1
+          curl -s -o /dev/null -w "→ nip.io теперь = %{http_code} (ожидаем НЕ 200)\n" -H "Host: docparser.135.106.158.143.nip.io" http://127.0.0.1/ || true
+          curl -sk -o /dev/null -w "→ vanga-lp всё ещё = %{http_code}\n" -H "Host: vanga-lp.sls24.ru" https://127.0.0.1/ || true
+          REMOTE
+
+      - name: Verify from runner
+        run: |
+          sleep 2
+          curl -s -o /dev/null -w "docparser.nip.io → %{http_code}\n" http://docparser.135.106.158.143.nip.io/ || true
+          curl -sk -o /dev/null -w "vanga-lp.sls24.ru → %{http_code}\n" https://vanga-lp.sls24.ru/ || true
