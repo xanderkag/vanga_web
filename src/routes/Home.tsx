@@ -12,6 +12,8 @@ import {
   Calculator,
   Plug,
   CheckCircle2,
+  Table2,
+  Files,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { docTypes, categories, type CategoryKey } from "@/lib/doc-types";
@@ -75,7 +77,7 @@ function Hero() {
             </h1>
             <p className="mt-6 max-w-xl text-lg text-[var(--muted)]">
               Универсальный сервис обработки транспортных, бухгалтерских и
-              юридических документов. 15 встроенных типов, доменная валидация,
+              юридических документов. 30 встроенных типов, доменная валидация,
               вебхуки. На выходе — готовый JSON для 1С, ERP и CRM.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -190,7 +192,7 @@ function SupportedDocs() {
       <Container>
         <SectionHeading
           eyebrow="Поддерживаемые документы"
-          title="15 встроенных типов из коробки"
+          title="30 встроенных типов из коробки"
           desc="Шесть базовых типов — типизированные парсеры со схемой, остальные — настраиваемый LLM-extract."
         />
         <div className="mt-14 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -278,6 +280,16 @@ function ForWhom() {
 
 const features = [
   {
+    icon: Table2,
+    title: "Таблицы и позиции",
+    desc: "Извлекаем массив строк — товары/услуги/грузы с количеством, ценой, НДС, весами и кодами ТН ВЭД.",
+  },
+  {
+    icon: Files,
+    title: "Многодокументные файлы",
+    desc: "Один PDF с несколькими документами разбивается на отдельные автоматически.",
+  },
+  {
     icon: ShieldCheck,
     title: "Доменная валидация",
     desc: "Checksum ИНН/КПП, формат госномеров, консистентность НДС и сумм — флаги прямо в ответе.",
@@ -363,7 +375,7 @@ export function Home() {
       <title>Doc Parser — PDF и сканы → структурированный JSON</title>
       <meta
         name="description"
-        content="Doc Parser (Big Brother) — обработка транспортных, бухгалтерских и юридических документов. 15 типов, доменная валидация, вебхуки. JSON для 1С, ERP и CRM."
+        content="Doc Parser (Big Brother) — обработка транспортных, бухгалтерских и юридических документов. 30 типов, доменная валидация, вебхуки. JSON для 1С, ERP и CRM."
       />
       <Hero />
       <HowItWorks />

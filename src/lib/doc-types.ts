@@ -12,6 +12,8 @@ export interface DocType {
   tier: Tier;
   icon: string;
   summary: string;
+  /** Умеет извлекать массив строк-позиций (товары/услуги/грузы). */
+  tables: boolean;
   hasSchema: boolean;
 }
 
