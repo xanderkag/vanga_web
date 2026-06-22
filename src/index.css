@@ -3,9 +3,9 @@
 /* Тёмная тема по классу на <html> */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Дизайн-токены: developer-first, один акцентный цвет */
+/* Дизайн-токены SLS24 · Vanga — developer-first, синий акцент #2f80ff */
 @theme {
-  --color-accent: #4f46e5;
+  --color-accent: #2f80ff;
   --color-accent-fg: #ffffff;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
@@ -16,10 +16,14 @@
   --muted: #6b7280;
   --border: #e5e7eb;
   --surface: #f9fafb;
+  /* Брендовый акцент (мягкий тон + rgb) — для MorphField "auto" и свечений */
+  --accent-soft: #9dc2ff;
+  --accent-rgb: 47, 128, 255;
 }
 
 .dark {
   --bg: #0a0a0c;
+  --bg-2: #12151c;
   --fg: #e8eaed;
   --muted: #8b95a5;
   --border: #1f2430;

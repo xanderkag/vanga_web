@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -14,6 +15,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MorphField } from "@/components/landing/MorphField";
 import { docTypes, categories, type CategoryKey } from "@/lib/doc-types";
 import { DocTypeIcon } from "@/lib/doc-icons";
 
@@ -53,6 +55,23 @@ const catTint: Record<CategoryKey, string> = {
 
 /* ─────────────── секции ─────────────── */
 
+/** Фирменное облако SLS24 — морфит 📄 → 🔍 → 🧾 → ✅ за hero-сниппетом. */
+function HeroCloud() {
+  const [active, setActive] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setActive((a) => a + 1), 2600);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute right-0 top-0 hidden h-full w-1/2 opacity-70 lg:block"
+    >
+      <MorphField shapes={["📄", "🔍", "🧾", "✅"]} active={active} count={460} size={0.7} />
+    </div>
+  );
+}
+
 function Hero() {
   return (
     <section className="relative overflow-hidden">
@@ -60,8 +79,9 @@ function Hero() {
         aria-hidden
         className="pointer-events-none absolute inset-x-0 -top-40 h-96 bg-[radial-gradient(60%_60%_at_50%_0%,color-mix(in_oklab,var(--color-accent)_18%,transparent),transparent)]"
       />
+      <HeroCloud />
       <Container>
-        <div className="grid items-center gap-12 py-20 lg:grid-cols-2 lg:py-28">
+        <div className="relative z-10 grid items-center gap-12 py-20 lg:grid-cols-2 lg:py-28">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1 text-xs text-[var(--muted)]">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-accent)]" />
