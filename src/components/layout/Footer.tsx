@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Logo } from "./Logo";
 
 export function Footer() {
   return (
@@ -6,7 +7,10 @@ export function Footer() {
       <div className="mx-auto max-w-6xl px-5 py-10 text-sm text-[var(--muted)]">
         <div className="flex flex-col gap-6 md:flex-row md:justify-between">
           <div>
-            <div className="font-semibold text-[var(--fg)]">Doc Parser</div>
+            <div className="flex items-center gap-2 font-semibold text-[var(--fg)]">
+              <Logo size={26} />
+              Doc Parser
+            </div>
             <p className="mt-2 max-w-xs">
               PDF и сканы → структурированный JSON для 1С / ERP / CRM.
             </p>

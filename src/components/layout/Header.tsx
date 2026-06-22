@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { FileJson, Menu, X, LayoutDashboard } from "lucide-react";
+import { Menu, X, LayoutDashboard } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
+import { Logo } from "./Logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -20,7 +21,7 @@ export function Header() {
     <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
         <Link to="/" className="flex items-center gap-2 font-semibold">
-          <FileJson size={20} className="text-[var(--color-accent)]" />
+          <Logo size={28} />
           <span>Doc Parser</span>
         </Link>
 
