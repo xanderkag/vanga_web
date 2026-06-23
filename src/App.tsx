@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { Logo } from "@/components/layout/Logo";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Home } from "@/routes/Home";
@@ -14,9 +15,18 @@ import { CookieBanner } from "@/components/layout/CookieBanner";
 
 function NotFound() {
   return (
-    <section className="mx-auto max-w-6xl px-5 py-24 text-center">
-      <h1 className="text-3xl font-bold">404</h1>
-      <p className="mt-4 text-[var(--muted)]">Страница не найдена.</p>
+    <section className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center px-5 py-24 text-center">
+      <Logo size={48} />
+      <h1 className="mt-8 text-6xl font-bold tracking-tight">404</h1>
+      <p className="mt-4 text-lg text-[var(--muted)]">
+        Такой страницы нет — возможно, ссылка устарела.
+      </p>
+      <Link
+        to="/"
+        className="mt-9 rounded-full bg-[var(--color-accent)] px-6 py-3 text-sm font-medium text-[var(--color-accent-fg)] transition hover:opacity-90"
+      >
+        На главную
+      </Link>
     </section>
   );
 }
