@@ -10,7 +10,7 @@ export const operator = {
   inn: "780223828359",
   ogrnip: "324784700397886",
   email: "liapustin@gmail.com",
-  site: "vanga-lp.sls24.ru",
+  site: "parsedocs.ru",
   service: "Doc Parser",
 };
 

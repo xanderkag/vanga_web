@@ -3,4 +3,4 @@ Allow: /
 
 Disallow: /app
 
-Sitemap: https://vanga-lp.sls24.ru/sitemap.xml
+Sitemap: https://parsedocs.ru/sitemap.xml
