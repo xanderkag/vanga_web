@@ -30,7 +30,7 @@ export const docsNav: DocSection[] = [
       {
         slug: "document-types",
         title: "Типы документов",
-        description: "Каталог 15 встроенных типов, фазы парсера и схемы вывода.",
+        description: "Каталог 30 встроенных типов, фазы парсера и схемы вывода.",
       },
       {
         slug: "api",

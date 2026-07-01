@@ -24,6 +24,7 @@ export function DocTypeTable() {
             <th className="px-4 py-3 font-semibold">Категория</th>
             <th className="px-4 py-3 font-semibold">Фаза парсера</th>
             <th className="px-4 py-3 font-semibold">Зрелость</th>
+            <th className="px-4 py-3 font-semibold">Позиции</th>
             <th className="px-4 py-3 font-semibold">Схема</th>
           </tr>
         </thead>
@@ -56,6 +57,15 @@ export function DocTypeTable() {
                 >
                   {t.tier}
                 </span>
+              </td>
+              <td className="px-4 py-3 text-[var(--muted)]">
+                {t.tables ? (
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    ✓ таблицы
+                  </span>
+                ) : (
+                  "—"
+                )}
               </td>
               <td className="px-4 py-3 text-[var(--muted)]">
                 {t.hasSchema ? (
